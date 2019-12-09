@@ -1,0 +1,36 @@
+#!/usr/bin/env php
+<?php
+/**
+ * Date: 2019-12-09
+ * Time: 15:05
+ */
+
+use Workerman\Worker;
+use Workerman\Connection\TcpConnection;
+
+$root_path = dirname(__DIR__);
+
+require_once $root_path.'/vendor/autoload.php';
+
+Worker::$pidFile = $root_path.'/runtime/ws_server.pid';
+Worker::$logFile = $root_path.'/runtime/logs/ws_server.log';
+Worker::$stdoutFile = $root_path.'/runtime/logs/ws_server-stdout.log';
+
+// 注意：这里与上个例子不同，使用的是websocket协议
+$ws_worker = new Worker("websocket://0.0.0.0:2346");
+
+// 启动4个进程对外提供服务
+$ws_worker->count = 4;
+
+//$http_worker->user = '_www';
+
+// 接收到浏览器发送的数据时回复hello world给浏览器
+$ws_worker->onMessage = function(TcpConnection $connection, $data)
+{
+    //var_dump($data);
+    // 客户端发送hello world
+    $connection->send('hello '.$data);
+};
+
+// 运行worker
+Worker::runAll();

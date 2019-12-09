@@ -1,0 +1,39 @@
+#!/usr/bin/env php
+<?php
+/**
+ * Date: 2019-12-09
+ * Time: 15:05
+ */
+
+//global $argv, $argc;
+//var_dump($argv, $argc);exit;
+
+use Workerman\Worker;
+use Workerman\Connection\TcpConnection;
+
+$root_path = dirname(__DIR__);
+
+require_once $root_path.'/vendor/autoload.php';
+
+Worker::$pidFile = $root_path.'/runtime/http_server.pid';
+Worker::$logFile = $root_path.'/runtime/logs/http_server.log';
+Worker::$stdoutFile = $root_path.'/runtime/logs/http_server-stdout.log';
+
+// 创建一个Worker监听2345端口，使用http协议通讯
+$http_worker = new Worker("http://0.0.0.0:2345");
+
+// 启动4个进程对外提供服务
+$http_worker->count = 4;
+
+//$http_worker->user = '_www';
+
+// 接收到浏览器发送的数据时回复hello world给浏览器
+$http_worker->onMessage = function(TcpConnection $connection, $data)
+{
+    var_dump($data);
+    // 向浏览器发送hello world
+    $connection->send('hello world');
+};
+
+// 运行worker
+Worker::runAll();

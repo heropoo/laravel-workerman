@@ -1,0 +1,33 @@
+#!/usr/bin/env php
+<?php
+/**
+ * Date: 2019-12-09
+ * Time: 15:15
+ */
+
+use Workerman\Worker;
+use Workerman\Connection\TcpConnection;
+
+$root_path = dirname(__DIR__);
+
+require_once $root_path . '/vendor/autoload.php';
+
+Worker::$pidFile = $root_path.'/runtime/tcp_server.pid';
+Worker::$logFile = $root_path.'/runtime/logs/tcp_server.log';
+Worker::$stdoutFile = $root_path.'/runtime/logs/tcp_server-stdout.log';
+
+// 创建一个Worker监听2347端口，不使用任何应用层协议
+$tcp_worker = new Worker("tcp://0.0.0.0:2347");
+
+// 启动4个进程对外提供服务
+$tcp_worker->count = 4;
+
+// 当客户端发来数据时
+$tcp_worker->onMessage = function(TcpConnection $connection, $data)
+{
+    // 向客户端发送hello $data
+    $connection->send('hello ' . $data);
+};
+
+// 运行worker
+Worker::runAll();
